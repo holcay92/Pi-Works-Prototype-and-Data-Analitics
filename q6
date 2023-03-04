@@ -1,0 +1,16 @@
+SELECT 
+    Device_Type,
+    SUBSTRING(
+        SUBSTRING_INDEX(
+            SUBSTRING_INDEX(LOWER(Stats_Access_Link), 'http', -1),
+            '</', 1
+        ),
+        LOCATE('://', SUBSTRING_INDEX(LOWER(Stats_Access_Link), 'http', -1)) + 3,
+        LENGTH(
+            SUBSTRING_INDEX(
+                SUBSTRING_INDEX(LOWER(Stats_Access_Link), 'http', -1),
+                '</', 1
+            )
+        ) - LOCATE('://', SUBSTRING_INDEX(LOWER(Stats_Access_Link), 'http', -1)) - 3
+    ) AS Pure_URL
+FROM YourTable
