@@ -1,0 +1,31 @@
+-- Create a temporary table to hold the minimum daily vaccination numbers per country
+CREATE TEMPORARY TABLE min_vaccinations AS
+SELECT country, MIN(daily_vaccinations) AS min_vaccinations
+FROM vaccination_data
+WHERE daily_vaccinations IS NOT NULL
+GROUP BY country;
+
+-- Replace missing values with 0
+UPDATE vaccination_data
+SET daily_vaccinations = 0
+WHERE daily_vaccinations IS NULL;
+
+-- Fill in missing values with the median daily vaccination number of each country
+UPDATE vaccination_data
+SET daily_vaccinations = COALESCE(
+    (SELECT median_vaccinations FROM (
+        SELECT country, MEDIAN(daily_vaccinations) OVER (PARTITION BY country) AS median_vaccinations
+        FROM vaccination_data
+        WHERE daily_vaccinations IS NOT NULL
+    ) t WHERE t.country = vaccination_data.country),
+    0
+)
+WHERE daily_vaccinations = 0;
+
+-- List the top-3 countries with the highest median daily vaccination numbers
+SELECT country, MEDIAN(daily_vaccinations) AS median_vaccinations
+FROM vaccination_data
+WHERE daily_vaccinations IS NOT NULL
+GROUP BY country
+ORDER BY median_vaccinations DESC
+LIMIT 3;
